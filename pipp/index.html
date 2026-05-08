@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบติดตามกฎหมายโรงงาน</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #1c2333;
+      --bg4: #21262d;
+      --border: #30363d;
+      --border2: #3d444d;
+      --text: #e6edf3;
+      --text2: #8b949e;
+      --text3: #6e7681;
+      --blue: #388bfd;
+      --blue-dim: #1f3a5f;
+      --green: #3fb950;
+      --green-dim: #1a3a25;
+      --amber: #d29922;
+      --amber-dim: #3d2e0e;
+      --red: #f85149;
+      --red-dim: #3d1a1a;
+      --purple: #a371f7;
+      --purple-dim: #2d1f5e;
+      --teal: #39d0a1;
+      --teal-dim: #0f3328;
+      --accent: #388bfd;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--blue);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-live {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid var(--green);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-live::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .current-date {
+      color: var(--text2);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* LAYOUT */
+    .wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* STAT CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border2);
+    }
+
+    .stat-label {
+      color: var(--text2);
+      font-size: 12px;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: 'IBM Plex Mono', monospace;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .stat-card.danger .stat-value {
+      color: var(--red);
+    }
+
+    .stat-card.warning .stat-value {
+      color: var(--amber);
+    }
+
+    .stat-card.ok .stat-value {
+      color: var(--green);
+    }
+
+    .stat-card.info .stat-value {
+      color: var(--blue);
+    }
+
+    /* MAIN GRID */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* TABLE */
+    .section-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text2);
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--blue-dim);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    /* REPORT TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--bg3);
+    }
+
+    td {
+      padding: 12px 14px;
+      vertical-align: middle;
+    }
+
+    .report-code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--blue);
+      background: var(--blue-dim);
+      border: 1px solid rgba(56, 139, 253, 0.2);
+      border-radius: 4px;
+      padding: 2px 7px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .report-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .report-desc {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+
+    /* STATUS BADGE */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .status::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .status.overdue {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+    }
+
+    .status.overdue::before {
+      background: var(--red);
+    }
+
+    .status.soon {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border: 1px solid rgba(210, 153, 34, 0.3);
+    }
+
+    .status.soon::before {
+      background: var(--amber);
+    }
+
+    .status.ok {
+      background: var(--green-dim);
+      color: var(--green);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+    }
+
+    .status.ok::before {
+      background: var(--green);
+    }
+
+    .status.pending {
+      background: var(--bg4);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+
+    .status.pending::before {
+      background: var(--text3);
+    }
+
+    .status.updated {
+      background: var(--purple-dim);
+      color: var(--purple);
+      border: 1px solid rgba(163, 113, 247, 0.3);
+    }
+
+    .status.updated::before {
+      background: var(--purple);
+    }
+
+    /* FREQ BADGE */
+    .freq {
+      font-size: 11px;
+      color: var(--text3);
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      white-space: nowrap;
+    }
+
+    .deadline {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .deadline.urgent {
+      color: var(--red);
+      font-weight: 500;
+    }
+
+    .deadline.warn {
+      color: var(--amber);
+    }
+
+    /* ACTIONS */
+    .action-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text2);
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Sarabun', sans-serif;
+      margin-right: 4px;
+    }
+
+    .action-btn:hover {
+      background: var(--blue-dim);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .action-btn.submit {
+      background: var(--green-dim);
+      border-color: rgba(63, 185, 80, 0.3);
+      color: var(--green);
+    }
+
+    .action-btn.submit:hover {
+      background: var(--green);
+      color: #000;
+    }
+
+    /* RIGHT PANEL */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* TIMELINE */
+    .timeline-list {
+      padding: 14px 18px;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+
+    .tl-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .tl-dot.red {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+    }
+
+    .tl-dot.amber {
+      background: var(--amber);
+      box-shadow: 0 0 6px var(--amber);
+    }
+
+    .tl-dot.green {
+      background: var(--green);
+    }
+
+    .tl-dot.blue {
+      background: var(--blue);
+    }
+
+    .tl-dot.purple {
+      background: var(--purple);
+    }
+
+    .tl-content {
+      flex: 1;
+    }
+
+    .tl-title {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .tl-date {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* AMEND LOG */
+    .log-list {
+      padding: 4px 0;
+    }
+
+    .log-item {
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .log-icon.add {
+      background: var(--green-dim);
+    }
+
+    .log-icon.edit {
+      background: var(--blue-dim);
+    }
+
+    .log-icon.del {
+      background: var(--red-dim);
+    }
+
+    .log-title {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .log-meta {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    /* PROGRESS BAR */
+    .progress-wrap {
+      padding: 14px 18px;
+    }
+
+    .progress-item {
+      margin-bottom: 14px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--bg4);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s ease;
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.2s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: 'Sarabun', sans-serif;
+      transition: border-color 0.15s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: 'Sarabun', sans-serif;
+      font-weight: 500;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .btn-secondary {
+      background: var(--bg3);
+      border-color: var(--border);
+      color: var(--text2);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #58a6ff;
+    }
+
+    .btn-danger {
+      background: var(--red-dim);
+      border-color: rgba(248, 81, 73, 0.3);
+      color: var(--red);
+    }
+
+    .btn-danger:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 300;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s;
+      max-width: 320px;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-color: rgba(63, 185, 80, 0.4);
+    }
+
+    .toast.success .toast-icon {
+      color: var(--green);
+    }
+
+    /* ADD LAW BUTTON */
+    .add-btn {
+      background: var(--blue);
+      border: none;
+      border-radius: 7px;
+      color: #fff;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Sarabun', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .add-btn:hover {
+      background: #58a6ff;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* MONTH INDICATOR ROW */
+    .month-row {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    .month-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+    }
+
+    .month-dot.active-green {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .month-dot.active-amber {
+      background: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .month-dot.active-red {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .month-dot.active-blue {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .month-dot.active-purple {
+      background: var(--purple);
+      border-color: var(--purple);
+    }
+
+    /* History tab area */
+    .history-section {
+      margin-top: 24px;
+    }
+
+    /* ====== USER LOGIN SCREEN ====== */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 36px 40px;
+      width: 380px;
+      text-align: center;
+      animation: slideUp 0.3s ease;
+    }
+
+    .login-logo {
+      width: 52px;
+      height: 52px;
+      background: var(--blue);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 16px;
+    }
+
+    .login-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      color: var(--text2);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+
+    .login-label {
+      text-align: left;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-weight: 500;
+      display: block;
+    }
+
+    .login-input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: 'Sarabun', sans-serif;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .login-btn {
+      width: 100%;
+      background: var(--blue);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 11px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Sarabun', sans-serif;
+      transition: background 0.15s;
+    }
+
+    .login-btn:hover {
+      background: #58a6ff;
+    }
+
+    .login-avatars {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .avatar-chip {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .avatar-chip.selected {
+      border-color: var(--blue);
+      transform: scale(1.1);
+    }
+
+    /* ====== ONLINE USERS ====== */
+    .online-users {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      position: relative;
+      border: 2px solid var(--bg2);
+      cursor: default;
+      transition: transform 0.15s;
+    }
+
+    .user-avatar:hover {
+      transform: scale(1.15);
+    }
+
+    .user-avatar .tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg4);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      color: var(--text);
+    }
+
+    .user-avatar:hover .tooltip {
+      opacity: 1;
+    }
+
+    .user-avatar .online-dot {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      border: 1.5px solid var(--bg2);
+    }
+
+    /* ====== REALTIME SYNC INDICATOR ====== */
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text3);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .sync-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      transition: background 0.3s;
+    }
+
+    .sync-dot.syncing {
+      background: var(--amber);
+      animation: pulse 0.5s infinite;
+    }
+
+    .sync-dot.error {
+      background: var(--red);
+    }
+
+    /* ====== WHO IS EDITING ====== */
+    .editing-badge {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--amber);
+      color: #000;
+      border-radius: 10px;
+      padding: 1px 5px;
+      font-size: 9px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    tbody tr {
+      position: relative;
+    }
+
+    .row-editing-indicator {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* ====== REALTIME FLASH ====== */
+    @keyframes rowFlash {
+      0% {
+        background: rgba(56, 139, 253, 0.2);
+      }
+
+      100% {
+        background: transparent;
+      }
+    }
+
+    .row-updated {
+      animation: rowFlash 1.2s ease;
+    }
+
+    /* ====== CURRENT USER CHIP ====== */
+    .current-user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px 3px 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .current-user-chip:hover {
+      border-color: var(--border2);
+    }
+
+    .current-user-chip .chip-avatar {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* ====== NOTIFICATION BANNER ====== */
+    .notif-banner {
+      position: fixed;
+      top: 60px;
+      right: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      z-index: 250;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      transform: translateX(120%);
+      transition: transform 0.3s;
+      max-width: 300px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .notif-banner.show {
+      transform: translateX(0);
+    }
+
+    .notif-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+  </style>
+  <!-- Load Dexie.js for easy Browser Database (IndexedDB) management -->
+  <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+  <!-- Load Supabase for Cloud Shared Database -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">⚖</div>
+      <div class="login-title">ระบบติดตามกฎหมายโรงงาน</div>
+      <div class="login-sub">กรุณาเข้าสู่ระบบก่อนใช้งาน</div>
+      <div class="login-avatars" id="avatar-picker">
+        <div class="avatar-chip selected" data-color="#388bfd" data-emoji="👤" onclick="selectAvatar(this)"
+          style="background:#1f3a5f;color:#388bfd">A</div>
+        <div class="avatar-chip" data-color="#3fb950" data-emoji="👤" onclick="selectAvatar(this)"
+          style="background:#1a3a25;color:#3fb950">B</div>
+        <div class="avatar-chip" data-color="#d29922" data-emoji="👤" onclick="selectAvatar(this)"
+          style="background:#3d2e0e;color:#d29922">C</div>
+        <div class="avatar-chip" data-color="#a371f7" data-emoji="👤" onclick="selectAvatar(this)"
+          style="background:#2d1f5e;color:#a371f7">D</div>
+        <div class="avatar-chip" data-color="#39d0a1" data-emoji="👤" onclick="selectAvatar(this)"
+          style="background:#0f3328;color:#39d0a1">E</div>
+      </div>
+      <label class="login-label">ชื่อผู้ใช้งาน</label>
+      <input type="text" class="login-input" id="login-name" placeholder="กรอกชื่อ เช่น สมชาย, ทีม A" maxlength="20"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="login-btn" onclick="doLogin()">เข้าสู่ระบบ →</button>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION BANNER -->
+  <div class="notif-banner" id="notif-banner">
+    <span class="notif-icon" id="notif-icon">🔔</span>
+    <div>
+      <div id="notif-title" style="font-weight:600;margin-bottom:2px"></div>
+      <div id="notif-meta" style="color:var(--text2)"></div>
+    </div>
+  </div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">⚖</div>
+      ระบบติดตามกฎหมายโรงงาน
+      <span style="color:var(--text3);font-weight:400;font-size:12px;">/ Regulatory Compliance</span>
+    </div>
+    <div class="topbar-right">
+      <div class="online-users" id="online-users"></div>
+      <div class="sync-status">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">ซิงค์แล้ว</span>
+      </div>
+      <span class="badge-live">LIVE</span>
+      <span class="current-date" id="current-date"></span>
+      <div class="current-user-chip" id="current-user-chip" onclick="showUserMenu()" title="คลิกเพื่อออกจากระบบ">
+        <div class="chip-avatar" id="chip-av"></div>
+        <span id="chip-name">ผู้ใช้</span>
+      </div>
+      <button class="add-btn" onclick="openAddModal()">+ เพิ่มกฎหมาย</button>
+    </div>
+  </div>
+
+  <div class="wrapper">
+
+    <!-- STATS -->
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="stat-card danger">
+        <div class="stat-label">🔴 เกินกำหนด</div>
+        <div class="stat-value" id="stat-overdue">0</div>
+        <div class="stat-sub">รายการที่ต้องดำเนินการทันที</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-label">🟡 ใกล้ถึงกำหนด</div>
+        <div class="stat-value" id="stat-soon">0</div>
+        <div class="stat-sub">ภายใน 30 วัน</div>
+      </div>
+      <div class="stat-card ok">
+        <div class="stat-label">🟢 ส่งแล้ว / ปกติ</div>
+        <div class="stat-value" id="stat-ok">0</div>
+        <div class="stat-sub">รายการที่เสร็จสิ้น</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-label">⏳ รอดำเนินการ</div>
+        <div class="stat-value" id="stat-pending">0</div>
+        <div class="stat-sub">ยังไม่ถึงกำหนดส่ง</div>
+      </div>
+      <div class="stat-card" style="border-color:var(--border2)">
+        <div class="stat-label">📋 รายงานทั้งหมด</div>
+        <div class="stat-value" id="stat-total" style="color:var(--text)">0</div>
+        <div class="stat-sub">รายการทั้งหมดที่ต้องติดตาม</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+      <!-- LEFT: TABLE -->
+      <div>
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">
+              📑 รายการรายงานตามกฎหมาย
+            </div>
+            <div class="filter-row">
+              <button class="filter-btn active" onclick="filterReports('all', this)">ทั้งหมด</button>
+              <button class="filter-btn" onclick="filterReports('overdue', this)">เกินกำหนด</button>
+              <button class="filter-btn" onclick="filterReports('soon', this)">ใกล้ถึงกำหนด</button>
+              <button class="filter-btn" onclick="filterReports('ok', this)">ปกติ</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>รายงาน</th>
+                <th>ความถี่</th>
+                <th>กำหนดส่งครั้งถัดไป</th>
+                <th>สถานะ</th>
+                <th>การดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body"></tbody>
+          </table>
+        </div>
+
+        <!-- HISTORY LOG -->
+        <div class="section-card history-section">
+          <div class="section-header">
+            <div class="section-title">📝 ประวัติการอัปเดตกฎหมาย</div>
+          </div>
+          <div class="log-list" id="history-log"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="right-col">
+
+        <!-- UPCOMING DEADLINES -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">🗓 กำหนดการส่งรายงาน (90 วันข้างหน้า)</div>
+          </div>
+          <div class="timeline-list" id="timeline-list"></div>
+        </div>
+
+        <!-- COMPLIANCE PROGRESS -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">📊 ความคืบหน้าการปฏิบัติตาม</div>
+          </div>
+          <div class="progress-wrap" id="progress-section"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD/EDIT MODAL -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">เพิ่มกฎหมายใหม่</span>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">รหัสรายงาน *</label>
+            <input type="text" class="form-input" id="f-code" placeholder="เช่น รง.8">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ความถี่การส่ง *</label>
+            <select class="form-select" id="f-freq">
+              <option value="monthly">รายเดือน (ทุกเดือน)</option>
+              <option value="biannual">2 ครั้ง/ปี</option>
+              <option value="annual-apr">รายปี (เมษายน)</option>
+              <option value="annual-mar">รายปี (1 มีนาคม)</option>
+              <option value="annual-jun">รายปี (30 มิถุนายน)</option>
+              <option value="biannual-mar-sep">2 ครั้ง/ปี (มี.ค./ก.ย.)</option>
+              <option value="5year">ทุก 5 ปี</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อรายงาน *</label>
+          <input type="text" class="form-input" id="f-name" placeholder="ชื่อรายงาน">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายละเอียด</label>
+          <input type="text" class="form-input" id="f-desc" placeholder="คำอธิบายสั้น">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">หน่วยงานที่รับผิดชอบ</label>
+            <input type="text" class="form-input" id="f-agency" placeholder="เช่น กรมโรงงาน">
+          </div>
+          <div class="form-group">
+            <label class="form-label">สถานะปัจจุบัน</label>
+            <select class="form-select" id="f-status">
+              <option value="pending">รอดำเนินการ</option>
+              <option value="ok">ส่งแล้ว</option>
+              <option value="overdue">เกินกำหนด</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ / บันทึกการเปลี่ยนแปลง</label>
+          <textarea class="form-textarea" id="f-note"
+            placeholder="บันทึกข้อมูลเพิ่มเติม หรือรายละเอียดการแก้ไขกฎหมาย..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="btn-delete" onclick="deleteReport()"
+          style="display:none;margin-right:auto">ลบรายการ</button>
+        <button class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="saveReport()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <span class="toast-icon" id="toast-icon">✓</span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <script>
+    // ==============================
+    // REALTIME SYNC ENGINE
+    // ==============================
+    // Uses localStorage for persistence + BroadcastChannel for instant cross-tab sync
+    // Works for 1-2 users on same device (different tabs) or same LAN via shared storage tricks
+
+    const STORAGE_KEY = 'reg_dashboard_data';
+    const PRESENCE_KEY = 'reg_dashboard_presence';
+
+    // --- SUPABASE CONFIG ---
+    const SUPABASE_URL = 'https://lezbqvuexcecvbdqgfvm.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_kl_49lvWmnPD02X_FP04OQ_-_GzKiFa';
+    // ใช้ชื่อ supabaseClient เพื่อไม่ให้ตีกับตัวแปรระบบ
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const API_BASE = 'http://localhost:3000/api';
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('reg_dashboard') : null;
+
+    // Current user session
+    let currentUser = null; // { name, color, initials, id }
+    let selectedAvatarColor = '#388bfd';
+    let selectedAvatarBg = '#1f3a5f';
+
+    // ==============================
+    // DATA
+    // ==============================
+    const today = new Date();
+
+    let reports = [
+      {
+        id: 1,
+        code: 'รง.8',
+        name: 'รายงานการจัดการวัตถุดิบและผลิตภัณฑ์รายเดือน',
+        desc: 'วัตถุดิบและผลิตภัณฑ์',
+        freq: 'monthly',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'ok',
+        note: '',
+        updatedAt: '2025-03-01'
+      },
+      {
+        id: 2,
+        code: 'รง.9',
+        name: 'รายงานแบบแจ้งข้อมูลประกอบกิจการโรงงานรายปี',
+        desc: 'ข้อมูลโรงงาน ประจำปี',
+        freq: 'annual-apr',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'pending',
+        note: '',
+        updatedAt: '2025-01-15'
+      },
+      {
+        id: 3,
+        code: 'วอ./อก.7',
+        name: 'รายงานข้อเท็จจริงการใช้และครอบครองวัตถุอันตราย',
+        desc: 'วัตถุอันตราย 2 ครั้ง/ปี',
+        freq: 'biannual',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'ok',
+        note: '',
+        updatedAt: '2025-01-10'
+      },
+      {
+        id: 4,
+        code: 'บฉ.6',
+        name: 'การทำรายงานการเก็บรักษาวัตถุอันตรายประจำปี',
+        desc: 'เก็บรักษาวัตถุอันตราย',
+        freq: 'annual-apr',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'pending',
+        note: '',
+        updatedAt: '2025-01-10'
+      },
+      {
+        id: 5,
+        code: 'สารเคมี >1ตัน',
+        name: 'รายงานข้อมูลการเก็บและใช้สารเคมีอันตรายมากกว่า 1 ตัน/ปี',
+        desc: 'สารเคมีอันตราย >1 ตัน',
+        freq: 'annual-apr',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'pending',
+        note: '',
+        updatedAt: '2025-01-10'
+      },
+      {
+        id: 6,
+        code: 'สก.3',
+        name: 'รายงานสิ่งปฏิกูล: รายงานการจัดการกากของเสียอันตรายประจำปี',
+        desc: 'กากของเสียอันตราย',
+        freq: 'annual-mar',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'ok',
+        note: 'ส่งแล้ว 1 มีนาคม 2025',
+        updatedAt: '2025-03-01'
+      },
+      {
+        id: 7,
+        code: 'รว.1 / รว.3',
+        name: 'รายงานรายการข้อมูลทั่วไป (รว.1) และมลพิษ (รว.3)',
+        desc: 'ข้อมูลทั่วไป + มลพิษ',
+        freq: 'biannual-mar-sep',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'ok',
+        note: 'ส่งรอบ มี.ค. แล้ว',
+        updatedAt: '2025-03-01'
+      },
+      {
+        id: 8,
+        code: 'บัญชี 5.6',
+        name: 'รายงานบัญชี 5.6 วัตถุอันตราย (ประเภทที่ 1) การนำเข้าสารเดี่ยว/สารผสม >1 เมตริกตัน/ปี',
+        desc: 'วัตถุอันตราย ปท.1 นำเข้า',
+        freq: 'annual-jun',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'pending',
+        note: '',
+        updatedAt: '2025-01-10'
+      },
+      {
+        id: 9,
+        code: 'ความเสี่ยง',
+        name: 'รายงานการวิเคราะห์ความเสี่ยงจากอันตรายที่อาจเกิดจากการประกอบกิจการโรงงาน',
+        desc: 'วิเคราะห์ความเสี่ยง ทุก 5 ปี',
+        freq: '5year',
+        agency: 'กรมโรงงานอุตสาหกรรม',
+        status: 'ok',
+        note: 'ส่งล่าสุดปี 2022',
+        updatedAt: '2022-06-01'
+      }
+    ];
+
+    let history = [
+      { icon: '📋', type: 'add', title: 'นำเข้าข้อมูลรายงานเริ่มต้นทั้งหมด 9 รายการ', meta: 'ระบบ · มี.ค. 2025', time: new Date('2025-03-01'), user: 'ระบบ' },
+    ];
+
+    let editId = null;
+    let currentFilter = 'all';
+
+    // Default reports (used only when no stored data)
+    const DEFAULT_REPORTS = JSON.parse(JSON.stringify(reports));
+    const DEFAULT_HISTORY = JSON.parse(JSON.stringify(history));
+
+    // ==============================
+    // BROWSER DATABASE (IndexedDB)
+    // ==============================
+    const db = new Dexie("ComplianceDB");
+    db.version(1).stores({
+      reports: '++id, code, status, freq',
+      history: '++id, type, time'
+    });
+
+    // ==============================
+    // DATABASE SYNC (Supabase + API + IndexedDB)
+    // ==============================
+    async function loadFromDatabase() {
+      setSyncIndicator('syncing');
+      try {
+        // 1. Try to fetch from Supabase (Cloud Shared)
+        if (supabaseClient) {
+          const { data: repData, error: repErr } = await supabaseClient.from('reports').select('*');
+          const { data: histData, error: histErr } = await supabaseClient.from('history').select('*').order('id', { ascending: false }).limit(20);
+
+          if (!repErr && repData) reports = repData;
+          if (!histErr && histData) {
+            history = histData.map(h => ({
+              ...h, time: h.time ? new Date(h.time) : new Date()
+            })).reverse();
+          }
+          if (!repErr) {
+            // Sync Supabase data to local IndexedDB as backup
+            await db.reports.clear();
+            await db.reports.bulkAdd(reports);
+            renderAll();
+            setSyncIndicator('ok');
+            return;
+          }
+        }
+
+        // 2. Try to fetch from API (Local Backend)
+        const [repRes, histRes] = await Promise.all([
+          fetch(`${API_BASE}/reports`).catch(() => null),
+          fetch(`${API_BASE}/history`).catch(() => null)
+        ]);
+
+        if (repRes && repRes.ok) {
+          const data = await repRes.json();
+          if (data && data.length > 0) reports = data;
+        } else {
+          // 3. Fallback: Load from IndexedDB
+          const localReports = await db.reports.toArray();
+          if (localReports.length > 0) reports = localReports;
+        }
+
+        if (histRes && histRes.ok) {
+          const data = await histRes.json();
+          if (data && data.length > 0) {
+            history = data.map(h => ({
+              ...h, time: h.time ? new Date(h.time) : new Date()
+            })).reverse();
+          }
+        } else {
+          // 3. Fallback: Load History from IndexedDB
+          const localHistory = await db.history.orderBy('id').reverse().limit(20).toArray();
+          if (localHistory.length > 0) {
+            history = localHistory.map(h => ({
+              ...h, time: h.time ? new Date(h.time) : new Date()
+            })).reverse();
+          }
+        }
+
+        renderAll();
+        setSyncIndicator('ok');
+      } catch (e) {
+        console.error('Failed to load from database', e);
+        loadFromStorage();
+      }
+    }
+
+    async function apiSaveReport(data) {
+      try {
+        // Save to IndexedDB (Local persistence)
+        if (data.id) await db.reports.put(data);
+        else {
+          const id = await db.reports.add(data);
+          data.id = id;
+        }
+
+        // Try to save to Supabase
+        if (supabaseClient) {
+          const { error } = await supabaseClient.from('reports').upsert(data);
+          if (!error) console.log("Saved to Supabase Cloud");
+        }
+
+        // Try to save to Backend
+        fetch(`${API_BASE}/reports`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).catch(() => { });
+
+        if (channel) channel.postMessage({ type: 'data_update', from: currentUser?.name });
+        return data;
+      } catch (e) {
+        console.error('Database Save Error:', e);
+        saveToStorage();
+      }
+    }
+
+    async function apiSaveHistory(entry) {
+      try {
+        await db.history.add(entry);
+        if (supabaseClient) await supabaseClient.from('history').insert(entry);
+        fetch(`${API_BASE}/history`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(entry)
+        }).catch(() => { });
+      } catch (e) {
+        console.error('Database History Error:', e);
+      }
+    }
+
+    async function apiDeleteReport(id) {
+      try {
+        await db.reports.delete(id);
+        if (supabaseClient) await supabaseClient.from('reports').delete().eq('id', id);
+        fetch(`${API_BASE}/reports/${id}`, { method: 'DELETE' }).catch(() => { });
+        if (channel) channel.postMessage({ type: 'data_update', from: currentUser?.name });
+      } catch (e) {
+        console.error('Database Delete Error:', e);
+      }
+    }
+
+    // ==============================
+    // LOGIN / USER SYSTEM
+    // ==============================
+    function selectAvatar(el) {
+      document.querySelectorAll('.avatar-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedAvatarColor = el.dataset.color;
+      selectedAvatarBg = el.style.background;
+    }
+
+    function doLogin() {
+      const nameInput = document.getElementById('login-name');
+      const name = nameInput.value.trim();
+      if (!name) { nameInput.style.borderColor = 'var(--red)'; nameInput.focus(); return; }
+      nameInput.style.borderColor = '';
+
+      const initials = name.slice(0, 2).toUpperCase();
+      currentUser = {
+        name, initials,
+        color: selectedAvatarColor,
+        bg: selectedAvatarBg,
+        id: Date.now() + Math.random().toString(36).slice(2, 6),
+        joinedAt: Date.now()
+      };
+
+      document.getElementById('login-overlay').style.display = 'none';
+
+      // Update user chip in topbar
+      const chipAv = document.getElementById('chip-av');
+      chipAv.style.background = selectedAvatarBg;
+      chipAv.style.color = selectedAvatarColor;
+      chipAv.textContent = initials;
+      document.getElementById('chip-name').textContent = name;
+
+      // Load data from storage
+      loadFromDatabase();
+      registerPresence();
+      startPresenceHeartbeat();
+
+      // Listen for cross-tab messages
+      if (channel) {
+        channel.onmessage = (e) => {
+          if (e.data.type === 'data_update') loadFromDatabase();
+          else handleChannelMessage(e.data);
+        };
+      }
+      // Also listen for storage events (different browser instances)
+      window.addEventListener('storage', handleStorageEvent);
+
+      updateDate();
+      renderAll();
+    }
+
+    function showUserMenu() {
+      if (confirm(`ออกจากระบบ "${currentUser?.name}" ?`)) {
+        unregisterPresence();
+        currentUser = null;
+        document.getElementById('login-overlay').style.display = 'flex';
+        document.getElementById('login-name').value = '';
+      }
+    }
+
+    // ==============================
+    // PERSISTENCE (localStorage)
+    // ==============================
+    function saveToStorage() {
+      setSyncIndicator('syncing');
+      // Keep only the latest 10 history entries
+      if (history.length > 10) history = history.slice(-10);
+      try {
+        const payload = {
+          reports,
+          history: history.map(h => ({ ...h, time: h.time instanceof Date ? h.time.toISOString() : h.time })),
+          updatedAt: Date.now(),
+          updatedBy: currentUser?.name || '?'
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        // Broadcast to other tabs
+        broadcastUpdate(payload);
+        setTimeout(() => setSyncIndicator('ok'), 400);
+      } catch (e) {
+        setSyncIndicator('error');
+      }
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const payload = JSON.parse(raw);
+          reports = payload.reports || DEFAULT_REPORTS;
+          history = (payload.history || DEFAULT_HISTORY).map(h => ({
+            ...h, time: h.time ? new Date(h.time) : new Date()
+          }));
+        }
+      } catch (e) {
+        reports = JSON.parse(JSON.stringify(DEFAULT_REPORTS));
+        history = JSON.parse(JSON.stringify(DEFAULT_HISTORY));
+      }
+    }
+
+    // ==============================
+    // BROADCAST CHANNEL (cross-tab realtime)
+    // ==============================
+    function broadcastUpdate(payload) {
+      if (!channel) return;
+      channel.postMessage({ type: 'data_update', payload, from: currentUser?.name });
+    }
+
+    function handleChannelMessage(msg) {
+      if (msg.type === 'data_update' && msg.from !== currentUser?.name) {
+        reports = msg.payload.reports || reports;
+        history = (msg.payload.history || history).map(h => ({
+          ...h, time: h.time ? new Date(h.time) : new Date()
+        }));
+        renderAll();
+        setSyncIndicator('ok');
+        showNotif('🔄', `${msg.from} อัปเดตข้อมูล`, 'ซิงค์ข้อมูลแล้ว');
+        flashTableRows();
+      }
+      if (msg.type === 'presence') {
+        renderOnlineUsers();
+      }
+    }
+
+    // Storage event for cross-window (different browser tabs/windows)
+    function handleStorageEvent(e) {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const payload = JSON.parse(e.newValue);
+          if (payload.updatedBy && payload.updatedBy !== currentUser?.name) {
+            reports = payload.reports || reports;
+            history = (payload.history || history).map(h => ({
+              ...h, time: h.time ? new Date(h.time) : new Date()
+            }));
+            renderAll();
+            setSyncIndicator('ok');
+            showNotif('🔄', `${payload.updatedBy} อัปเดตข้อมูล`, 'ซิงค์ข้อมูลแล้ว');
+            flashTableRows();
+          }
+        } catch (e) { }
+      }
+      if (e.key === PRESENCE_KEY) {
+        renderOnlineUsers();
+      }
+    }
+
+    // ==============================
+    // PRESENCE (who is online)
+    // ==============================
+    function registerPresence() {
+      if (!currentUser) return;
+      try {
+        const all = getPresence();
+        all[currentUser.id] = { ...currentUser, lastSeen: Date.now() };
+        localStorage.setItem(PRESENCE_KEY, JSON.stringify(all));
+        if (channel) channel.postMessage({ type: 'presence', from: currentUser.name });
+        renderOnlineUsers();
+      } catch (e) { }
+    }
+
+    function unregisterPresence() {
+      if (!currentUser) return;
+      try {
+        const all = getPresence();
+        delete all[currentUser.id];
+        localStorage.setItem(PRESENCE_KEY, JSON.stringify(all));
+        if (channel) channel.postMessage({ type: 'presence', from: currentUser?.name });
+      } catch (e) { }
+      window.removeEventListener('beforeunload', unregisterPresence);
+    }
+
+    function getPresence() {
+      try {
+        const raw = localStorage.getItem(PRESENCE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) { return {}; }
+    }
+
+    function startPresenceHeartbeat() {
+      // Update heartbeat every 20s, expire users > 40s old
+      setInterval(() => {
+        registerPresence();
+        // Prune stale users
+        const all = getPresence();
+        const now = Date.now();
+        let changed = false;
+        Object.keys(all).forEach(id => {
+          if (now - all[id].lastSeen > 40000) { delete all[id]; changed = true; }
+        });
+        if (changed) {
+          localStorage.setItem(PRESENCE_KEY, JSON.stringify(all));
+          renderOnlineUsers();
+        }
+      }, 20000);
+      window.addEventListener('beforeunload', unregisterPresence);
+    }
+
+    function renderOnlineUsers() {
+      const all = getPresence();
+      const now = Date.now();
+      const online = Object.values(all).filter(u => now - u.lastSeen < 40000);
+      const container = document.getElementById('online-users');
+      if (!container) return;
+      container.innerHTML = online.map(u => `
+    <div class="user-avatar" style="background:${u.bg || '#1f3a5f'};color:${u.color || '#388bfd'}">
+      ${u.initials}
+      <div class="online-dot"></div>
+      <div class="tooltip">${u.name}${u.id === currentUser?.id ? ' (คุณ)' : ''}</div>
+    </div>
+  `).join('');
+    }
+
+    // ==============================
+    // SYNC INDICATOR
+    // ==============================
+    function setSyncIndicator(state) {
+      const dot = document.getElementById('sync-dot');
+      const label = document.getElementById('sync-label');
+      if (!dot || !label) return;
+      dot.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+      label.textContent = state === 'syncing' ? 'กำลังซิงค์…' : state === 'error' ? 'ซิงค์ล้มเหลว' : 'ซิงค์แล้ว';
+    }
+
+    // ==============================
+    // NOTIFICATIONS
+    // ==============================
+    let notifTimer = null;
+    function showNotif(icon, title, meta) {
+      const banner = document.getElementById('notif-banner');
+      document.getElementById('notif-icon').textContent = icon;
+      document.getElementById('notif-title').textContent = title;
+      document.getElementById('notif-meta').textContent = meta;
+      banner.classList.add('show');
+      clearTimeout(notifTimer);
+      notifTimer = setTimeout(() => banner.classList.remove('show'), 3500);
+    }
+
+    function flashTableRows() {
+      document.querySelectorAll('#report-table-body tr').forEach(tr => {
+        tr.classList.remove('row-updated');
+        void tr.offsetWidth;
+        tr.classList.add('row-updated');
+      });
+    }
+
+    // ==============================
+    // UTILS
+    // ==============================
+    function formatDate(d) {
+      return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function getNextDeadline(report) {
+      const y = today.getFullYear();
+      const m = today.getMonth();
+      let d;
+
+      if (report.freq === 'monthly') {
+        let next = new Date(y, m, 15);
+        if (today.getDate() > 15) next = new Date(y, m + 1, 15);
+        if (next < today) next = new Date(y, m + 1, 15);
+        return next;
+      }
+      if (report.freq === 'annual-apr') {
+        d = new Date(y, 3, 30);
+        if (d < today) d = new Date(y + 1, 3, 30);
+        return d;
+      }
+      if (report.freq === 'annual-mar') {
+        d = new Date(y, 2, 1);
+        if (d < today) d = new Date(y + 1, 2, 1);
+        return d;
+      }
+      if (report.freq === 'annual-jun') {
+        d = new Date(y, 5, 30);
+        if (d < today) d = new Date(y + 1, 5, 30);
+        return d;
+      }
+      if (report.freq === 'biannual') {
+        const jan = new Date(y, 0, 31);
+        const jul = new Date(y, 6, 31);
+        if (today <= jan) return jan;
+        if (today <= jul) return jul;
+        return new Date(y + 1, 0, 31);
+      }
+      if (report.freq === 'biannual-mar-sep') {
+        const mar = new Date(y, 2, 1);
+        const sep = new Date(y, 8, 1);
+        if (today <= mar) return mar;
+        if (today <= sep) return sep;
+        return new Date(y + 1, 2, 1);
+      }
+      if (report.freq === '5year') {
+        return new Date(y + 2, 5, 1);
+      }
+      return new Date(y, 11, 31);
+    }
+
+    function daysUntil(d) {
+      return Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function computeStatus(report) {
+      // ยึดค่าที่ผู้ใช้ตั้งเองเสมอ ยกเว้น pending ให้คำนวณจากวันกำหนดส่ง
+      if (report.status === 'ok') return 'ok';
+      if (report.status === 'overdue') return 'overdue';
+      if (report.status === 'updated') return 'updated';
+      // status === 'pending' → คำนวณจากวันที่จริง
+      const days = daysUntil(getNextDeadline(report));
+      if (days < 0) return 'overdue';
+      if (days <= 30) return 'soon';
+      return 'pending';
+    }
+
+    function statusLabel(s) {
+      if (s === 'overdue') return '<span class="status overdue">เกินกำหนด</span>';
+      if (s === 'soon') return '<span class="status soon">ใกล้ถึงกำหนด</span>';
+      if (s === 'ok') return '<span class="status ok">ส่งแล้ว</span>';
+      if (s === 'updated') return '<span class="status updated">อัปเดตแล้ว</span>';
+      return '<span class="status pending">รอดำเนินการ</span>';
+    }
+
+    function freqLabel(freq) {
+      const map = {
+        'monthly': 'รายเดือน',
+        'biannual': '2×/ปี (ม.ค./ก.ค.)',
+        'annual-apr': 'รายปี (เม.ย.)',
+        'annual-mar': 'รายปี (1 มี.ค.)',
+        'annual-jun': 'รายปี (30 มิ.ย.)',
+        'biannual-mar-sep': '2×/ปี (มี.ค./ก.ย.)',
+        '5year': 'ทุก 5 ปี'
+      };
+      return map[freq] || freq;
+    }
+
+    function userName() { return currentUser?.name || 'ผู้ใช้'; }
+
+    // ==============================
+    // RENDER
+    // ==============================
+    function renderAll() {
+      renderStats();
+      renderTable();
+      renderTimeline();
+      renderProgress();
+      renderHistory();
+      renderOnlineUsers();
+    }
+
+    function renderStats() {
+      let overdue = 0, soon = 0, ok = 0, pending = 0;
+      reports.forEach(r => {
+        const s = computeStatus(r);
+        if (s === 'overdue') overdue++;
+        else if (s === 'soon') soon++;
+        else if (s === 'ok') ok++;
+        else pending++;
+      });
+      document.getElementById('stat-overdue').textContent = overdue;
+      document.getElementById('stat-soon').textContent = soon;
+      document.getElementById('stat-ok').textContent = ok;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-total').textContent = reports.length;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('report-table-body');
+      let filtered = reports;
+      if (currentFilter !== 'all') {
+        filtered = reports.filter(r => computeStatus(r) === currentFilter);
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        const s = computeStatus(r);
+        const deadline = getNextDeadline(r);
+        const days = daysUntil(deadline);
+        const deadlineClass = days < 0 ? 'urgent' : days <= 30 ? 'warn' : '';
+        const deadlineStr = r.freq === '5year' ? 'ทุก 5 ปี' : formatDate(deadline) + (days >= 0 ? ` (${days} วัน)` : ` (${Math.abs(days)} วันที่ผ่านมา)`);
+
+        return `<tr onclick="openEditModal(${r.id})">
+      <td><span class="report-code">${r.code}</span></td>
+      <td>
+        <div class="report-name">${r.name}</div>
+        <div class="report-desc">${r.desc}${r.agency ? ' · ' + r.agency : ''}</div>
+      </td>
+      <td><span class="freq">${freqLabel(r.freq)}</span></td>
+      <td><span class="deadline ${deadlineClass}">${deadlineStr}</span></td>
+      <td>${statusLabel(s)}</td>
+      <td>
+        <button class="action-btn submit" onclick="markDone(event, ${r.id})">✓ ส่งแล้ว</button>
+        <button class="action-btn" onclick="openEditModal(${r.id});event.stopPropagation()">แก้ไข</button>
+      </td>
+    </tr>`;
+      }).join('');
+    }
+
+    function renderTimeline() {
+      const list = document.getElementById('timeline-list');
+      const upcoming = reports
+        .map(r => ({ ...r, deadline: getNextDeadline(r), days: daysUntil(getNextDeadline(r)) }))
+        .filter(r => r.days >= 0 && r.days <= 90)
+        .sort((a, b) => a.days - b.days)
+        .slice(0, 8);
+
+      list.innerHTML = upcoming.map(r => {
+        const dotClass = r.days < 7 ? 'red' : r.days < 30 ? 'amber' : 'green';
+        return `<div class="timeline-item">
+      <div class="tl-dot ${dotClass}"></div>
+      <div class="tl-content">
+        <div class="tl-title">${r.code} — ${r.name.length > 35 ? r.name.slice(0, 35) + '…' : r.name}</div>
+        <div class="tl-date">${formatDate(r.deadline)} · อีก ${r.days} วัน</div>
+      </div>
+    </div>`;
+      }).join('') || '<div style="color:var(--text3);font-size:12px;padding:8px 0;">ไม่มีกำหนดส่งใน 90 วันข้างหน้า</div>';
+    }
+
+    function renderProgress() {
+      const sec = document.getElementById('progress-section');
+      const total = reports.length;
+      const ok = reports.filter(r => computeStatus(r) === 'ok').length;
+      const overdue = reports.filter(r => computeStatus(r) === 'overdue').length;
+      const soon = reports.filter(r => computeStatus(r) === 'soon').length;
+
+      const pct = r => Math.round((r / total) * 100);
+
+      sec.innerHTML = `
+    <div class="progress-item">
+      <div class="progress-label"><span>ส่งแล้ว / ปกติ</span><span style="color:var(--green)">${ok}/${total} (${pct(ok)}%)</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct(ok)}%;background:var(--green)"></div></div>
+    </div>
+    <div class="progress-item">
+      <div class="progress-label"><span>ใกล้ถึงกำหนด</span><span style="color:var(--amber)">${soon}/${total} (${pct(soon)}%)</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct(soon)}%;background:var(--amber)"></div></div>
+    </div>
+    <div class="progress-item">
+      <div class="progress-label"><span>เกินกำหนด</span><span style="color:var(--red)">${overdue}/${total} (${pct(overdue)}%)</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct(overdue)}%;background:var(--red)"></div></div>
+    </div>
+  `;
+    }
+
+    function renderHistory() {
+      const el = document.getElementById('history-log');
+      const iconMap = { add: '➕', edit: '✏️', del: '🗑', ok: '✅' };
+      const typeMap = { add: 'add', edit: 'edit', del: 'del', ok: 'add' };
+      el.innerHTML = history.slice().reverse().slice(0, 10).map(h => `
+    <div class="log-item">
+      <div class="log-icon ${typeMap[h.type] || 'edit'}">${iconMap[h.type] || '📋'}</div>
+      <div>
+        <div class="log-title">${h.title}</div>
+        <div class="log-meta">${h.user ? '<strong>' + h.user + '</strong> · ' : ''}${h.meta}</div>
+      </div>
+    </div>
+  `).join('') || '<div style="color:var(--text3);font-size:12px;padding:14px 18px;">ยังไม่มีประวัติ</div>';
+    }
+
+    // ==============================
+    // FILTER
+    // ==============================
+    function filterReports(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+    }
+
+    // ==============================
+    // MODAL
+    // ==============================
+    function openAddModal() {
+      editId = null;
+      document.getElementById('modal-title').textContent = '➕ เพิ่มกฎหมายใหม่';
+      document.getElementById('btn-delete').style.display = 'none';
+      document.getElementById('edit-id').value = '';
+      document.getElementById('f-code').value = '';
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-desc').value = '';
+      document.getElementById('f-freq').value = 'monthly';
+      document.getElementById('f-agency').value = 'กรมโรงงานอุตสาหกรรม';
+      document.getElementById('f-status').value = 'pending';
+      document.getElementById('f-note').value = '';
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function openEditModal(id) {
+      editId = id;
+      const r = reports.find(x => x.id === id);
+      if (!r) return;
+      document.getElementById('modal-title').textContent = '✏️ แก้ไขรายงาน — ' + r.code;
+      document.getElementById('btn-delete').style.display = 'inline-block';
+      document.getElementById('edit-id').value = id;
+      document.getElementById('f-code').value = r.code;
+      document.getElementById('f-name').value = r.name;
+      document.getElementById('f-desc').value = r.desc;
+      document.getElementById('f-freq').value = r.freq;
+      document.getElementById('f-agency').value = r.agency || '';
+      document.getElementById('f-status').value = r.status;
+      document.getElementById('f-note').value = r.note || '';
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function closeModal(e) {
+      if (e && e.target !== document.getElementById('modal-overlay')) return;
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function saveReport() {
+      const code = document.getElementById('f-code').value.trim();
+      const name = document.getElementById('f-name').value.trim();
+      if (!code || !name) { showToast('⚠️ กรุณากรอกรหัสและชื่อรายงาน', false); return; }
+
+      const data = {
+        code, name,
+        desc: document.getElementById('f-desc').value.trim(),
+        freq: document.getElementById('f-freq').value,
+        agency: document.getElementById('f-agency').value.trim(),
+        status: document.getElementById('f-status').value,
+        note: document.getElementById('f-note').value.trim(),
+        updatedAt: new Date().toISOString().slice(0, 10)
+      };
+
+      if (editId) {
+        const idx = reports.findIndex(x => x.id === editId);
+        const updatedReport = { ...reports[idx], ...data };
+        reports[idx] = updatedReport;
+        const histEntry = { icon: '✏️', type: 'edit', title: `แก้ไข ${code} — ${name.slice(0, 30)}`, meta: formatDate(new Date()), user: userName(), time: new Date().toISOString() };
+        history.push({ ...histEntry, time: new Date(histEntry.time) });
+
+        apiSaveReport(updatedReport);
+        apiSaveHistory(histEntry);
+        showToast('✓ บันทึกการแก้ไขเรียบร้อย');
+      } else {
+        const histEntry = { icon: '➕', type: 'add', title: `เพิ่มรายงานใหม่ ${code} — ${name.slice(0, 30)}`, meta: formatDate(new Date()), user: userName(), time: new Date().toISOString() };
+
+        apiSaveReport(data).then(res => {
+          if (res && res.id) {
+            reports.push({ id: res.id, ...data });
+            history.push({ ...histEntry, time: new Date(histEntry.time) });
+            renderAll();
+          }
+        });
+        apiSaveHistory(histEntry);
+        showToast('✓ เพิ่มกฎหมายใหม่เรียบร้อย');
+      }
+
+      document.getElementById('modal-overlay').classList.remove('open');
+      renderAll();
+    }
+
+    function deleteReport() {
+      if (!editId) return;
+      const r = reports.find(x => x.id === editId);
+      if (!confirm(`ต้องการลบ "${r.code}" ออกจากระบบ?`)) return;
+
+      const histEntry = { icon: '🗑', type: 'del', title: `ลบรายงาน ${r.code} — ${r.name.slice(0, 30)}`, meta: formatDate(new Date()), user: userName(), time: new Date().toISOString() };
+      history.push({ ...histEntry, time: new Date(histEntry.time) });
+      reports = reports.filter(x => x.id !== editId);
+
+      apiDeleteReport(editId);
+      apiSaveHistory(histEntry);
+
+      document.getElementById('modal-overlay').classList.remove('open');
+      showToast('ลบรายการเรียบร้อย');
+      renderAll();
+    }
+
+    function markDone(e, id) {
+      e.stopPropagation();
+      const r = reports.find(x => x.id === id);
+      r.status = 'ok';
+      r.updatedAt = new Date().toISOString().slice(0, 10);
+
+      const histEntry = { icon: '✅', type: 'ok', title: `ยืนยันการส่ง ${r.code} — ${r.name.slice(0, 30)}`, meta: formatDate(new Date()), user: userName(), time: new Date().toISOString() };
+      history.push({ ...histEntry, time: new Date(histEntry.time) });
+
+      apiSaveReport(r);
+      apiSaveHistory(histEntry);
+
+      showToast('✓ บันทึกการส่งรายงานแล้ว');
+      renderAll();
+    }
+
+    // ==============================
+    // TOAST
+    // ==============================
+    function showToast(msg, success = true) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      t.className = 'toast show' + (success ? ' success' : '');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ==============================
+    // INIT
+    // ==============================
+    function updateDate() {
+      const now = new Date();
+      document.getElementById('current-date').textContent = now.toLocaleDateString('th-TH', {
+        weekday: 'short', year: 'numeric', month: 'long', day: 'numeric'
+      });
+    }
+
+    updateDate();
+    setInterval(updateDate, 60000);
+    // Note: renderAll() is called after login
+  </script>
+</body>
+
+</html>
