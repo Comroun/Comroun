@@ -4,4 +4,6 @@
 </picture>, I'm Porpa</h1>
 <h3 align="center">A passionate frontend developer from Thailand</h3>
 
-![](./typewriter.svg)
+<p align="center">
+  <img src="./typewriter.svg" alt="Human Typing Animation" />
+</p>
